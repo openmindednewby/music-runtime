@@ -12,6 +12,24 @@ export type { SchedulerTickInfo } from './Scheduler';
 export { parseBeatFlag, parseBeatLane } from './PatternParser';
 export { degreeToHz } from './frequency';
 export { presets, getPreset } from './presets';
+export { AudioChannel } from './AudioChannel';
+export {
+  VOLUME_STEPS,
+  DEFAULT_VOLUME_STEP,
+  DEFAULT_VOLUME_KEY,
+  clampStep,
+  stepToGain,
+  defaultVolumePrefs,
+  localVolumeStorage,
+} from './volume';
+export type { VolumePrefs, VolumeStorage, VolumeKeyValueStore } from './volume';
+export { AudioMixer } from './AudioMixer';
+export type { AudioMixerOptions, MuteableEngine } from './AudioMixer';
+export { CooldownGate } from './CooldownGate';
+export { SfxPlayer } from './SfxPlayer';
+export type { SfxVoice, SfxBank, SfxPlayerOptions, SfxPlayOptions } from './SfxPlayer';
+export { SFX_PRESETS } from './sfxPresets';
+export type { SfxPresetId } from './sfxPresets';
 export type {
   EpTrack,
   EpScale,

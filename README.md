@@ -42,6 +42,30 @@ engine.stop();
 engine.dispose();
 ```
 
+## Volume, mute and SFX (1.1)
+
+The package stays dependency-free: volume prefs persist through a `VolumeStorage` port you can back with your own settings store.
+
+```ts
+import { MusicEngine, SfxBus, AudioMixer, AudioChannel, SfxPlayer, SFX_PRESETS, localVolumeStorage } from '@eisaipollis/music-runtime';
+
+const bus = new SfxBus();
+const mixer = new AudioMixer(bus, { storage: localVolumeStorage() }); // defaults: music 3, sfx 3 of 5, unmuted
+const engine = new MusicEngine(bus);
+mixer.attach(engine);                       // mute now also stops music scheduling
+
+// inside the first user gesture:
+bus.init();
+mixer.apply();                              // the graph is lazy; re-apply gains once it exists
+
+const sfx = new SfxPlayer(bus, mixer, { bank: SFX_PRESETS, cooldownMs: { pickup: 60 } });
+sfx.play('jump');                           // false when muted, sfx step 0, cooling down, or no AudioContext
+mixer.setStep(AudioChannel.Music, 4);       // false = not persisted; the change still applies this session
+mixer.toggleMute();
+```
+
+`localVolumeStorage` stores `{ music, sfx, muted }` as JSON under `epmr_volume_v1`; with nothing there it imports the 1.0 `epmr_music_mute` flag. To store prefs elsewhere, pass any `{ load(): VolumePrefs | null; save(p): boolean }`.
+
 ## The `.eptrack/1` format
 
 Every `EpTrack` is fully self-describing — all the synth's per-track parameters live on the object, so a track is portable across games:
