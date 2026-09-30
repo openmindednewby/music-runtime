@@ -2,7 +2,7 @@
 
 ## 1.1.0 — 2026-09-30
 
-Additive; the 1.0 API is unchanged.
+Published as `@dloizides/music-runtime` (1.0.0 was never published under `@eisaipollis`). Additive; the 1.0 API is unchanged.
 
 - `AudioChannel` (`Music`, `Sfx`) and volume steps 0..5: `clampStep` (round, clamp, NaN -> 3), `stepToGain` (squared curve, 0 -> 0, 5 -> 1), `DEFAULT_VOLUME_STEP = 3`.
 - `VolumeStorage` port plus `localVolumeStorage(key = 'epmr_volume_v1', store?)`. With no stored prefs it reads the 1.0 `epmr_music_mute=1` key as muted.

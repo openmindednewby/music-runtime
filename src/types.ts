@@ -1,4 +1,4 @@
-// Public types for @eisaipollis/music-runtime.
+// Public types for @dloizides/music-runtime.
 
 /** Wave type accepted by Web Audio OscillatorNode (subset used by EpTrack). */
 export type EpWaveType = 'sine' | 'square' | 'sawtooth' | 'triangle';

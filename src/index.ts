@@ -1,4 +1,4 @@
-// @eisaipollis/music-runtime — public surface.
+// @dloizides/music-runtime — public surface.
 //
 // Phase 1 of the EisaiPollis Music Studio plan. Procedural music engine
 // extracted from Beyond the Void. Framework-agnostic, zero-dependency,

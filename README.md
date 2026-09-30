@@ -1,11 +1,11 @@
-# @eisaipollis/music-runtime
+# @dloizides/music-runtime
 
 Procedural music engine extracted from [Beyond the Void](https://btv.eisaipollis.com). Web Audio synth + 16-step scheduler + 40 named compositions, framework-agnostic, zero runtime dependencies. Phase 1 of the EisaiPollis Music Studio plan — every game in the portfolio (BTV, Morphe, Solid State, Keyboard Piano, future titles) loads the same `.eptrack/1` JSON files and they sound identical.
 
 ## Usage
 
 ```ts
-import { MusicEngine, presets, getPreset } from '@eisaipollis/music-runtime';
+import { MusicEngine, presets, getPreset } from '@dloizides/music-runtime';
 
 const engine = new MusicEngine();
 
@@ -47,7 +47,7 @@ engine.dispose();
 The package stays dependency-free: volume prefs persist through a `VolumeStorage` port you can back with your own settings store.
 
 ```ts
-import { MusicEngine, SfxBus, AudioMixer, AudioChannel, SfxPlayer, SFX_PRESETS, localVolumeStorage } from '@eisaipollis/music-runtime';
+import { MusicEngine, SfxBus, AudioMixer, AudioChannel, SfxPlayer, SFX_PRESETS, localVolumeStorage } from '@dloizides/music-runtime';
 
 const bus = new SfxBus();
 const mixer = new AudioMixer(bus, { storage: localVolumeStorage() }); // defaults: music 3, sfx 3 of 5, unmuted

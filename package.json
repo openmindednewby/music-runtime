@@ -1,5 +1,5 @@
 {
-  "name": "@eisaipollis/music-runtime",
+  "name": "@dloizides/music-runtime",
   "version": "1.0.0",
   "description": "Procedural music engine extracted from Beyond the Void. Web Audio synth + scheduler + 40 named compositions, framework-agnostic, zero deps. Consumed by every EisaiPollis game.",
   "keywords": [

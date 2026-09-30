@@ -3,7 +3,7 @@
 // captured for Phase 1 of the EisaiPollis Music Studio extraction.
 //
 // These are intentionally a flat set of named consts so consumers can
-// `import { CFG_BASS_GAIN } from '@eisaipollis/music-runtime'` if they ever
+// `import { CFG_BASS_GAIN } from '@dloizides/music-runtime'` if they ever
 // need to. They are not part of the EpTrack data — they are global synth
 // behaviour (filter slopes, ramp curves, drop-state pacing).
 
