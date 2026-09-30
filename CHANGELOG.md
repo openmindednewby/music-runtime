@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.1 — 2026-09-30
+
+- `AudioChannel` is now a regular `enum`. 1.1.0 published a `declare const enum`, which consumers compiled with `isolatedModules` cannot use. `npm run test:consumer` (also run by `prepublishOnly`) type-checks a consumer against the built `dist` with `isolatedModules: true`.
+- `SfxVoice` is a discriminated union: `SfxToneVoice` (needs `freq`, optional `freqEnd`) and `SfxNoiseVoice` (`wave: 'noise'`, no `freq`).
+- `SfxPlayer` caps every voice at `MAX_SFX_DURATION` (1.5 s), disconnects its nodes when the voice ends, and reuses one noise buffer per duration.
+- A throwing `AudioMixer` subscriber no longer skips the other listeners or the save.
+- `repository.url` normalised by `npm pkg fix`.
+
 ## 1.1.0 — 2026-09-30
 
 Published as `@dloizides/music-runtime` (1.0.0 was never published under `@eisaipollis`). Additive; the 1.0 API is unchanged.

@@ -17,6 +17,17 @@ export interface FakeCtx {
   createBiquadFilter: jest.Mock;
 }
 
+export interface FakeSource {
+  connect: jest.Mock;
+  disconnect: jest.Mock;
+  start: jest.Mock;
+  stop: jest.Mock;
+  onended: (() => void) | null;
+  frequency?: FakeParam;
+  buffer?: unknown;
+  type?: string;
+}
+
 const param = (value: number): FakeParam => ({
   value,
   setValueAtTime: jest.fn(),
@@ -24,20 +35,23 @@ const param = (value: number): FakeParam => ({
   exponentialRampToValueAtTime: jest.fn(),
 });
 
-const node = <T extends object>(extra: T): T & { connect: jest.Mock } => {
-  const n = { ...extra, connect: jest.fn() };
+const node = <T extends object>(extra: T): T & { connect: jest.Mock; disconnect: jest.Mock } => {
+  const n = { ...extra, connect: jest.fn(), disconnect: jest.fn() };
   n.connect.mockImplementation((dst: unknown) => dst);
   return n;
 };
+
+const source = <T extends object>(extra: T): T & FakeSource =>
+  node({ ...extra, start: jest.fn(), stop: jest.fn(), onended: null as (() => void) | null }) as unknown as T & FakeSource;
 
 export function fakeCtx(): FakeCtx {
   return {
     currentTime: 0,
     sampleRate: 8000,
     createGain: jest.fn(() => node({ gain: param(1) })),
-    createOscillator: jest.fn(() => node({ type: 'sine', frequency: param(440), start: jest.fn(), stop: jest.fn() })),
-    createBufferSource: jest.fn(() => node({ buffer: null, start: jest.fn(), stop: jest.fn() })),
-    createBuffer: jest.fn((_c: number, len: number) => ({ getChannelData: (): Float32Array => new Float32Array(len) })),
+    createOscillator: jest.fn(() => source({ type: 'sine', frequency: param(440) })),
+    createBufferSource: jest.fn(() => source({ buffer: null as unknown })),
+    createBuffer: jest.fn((_c: number, len: number) => ({ length: len, getChannelData: (): Float32Array => new Float32Array(len) })),
     createBiquadFilter: jest.fn(() => node({ type: 'lowpass', frequency: param(1000) })),
   };
 }

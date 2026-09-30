@@ -14,7 +14,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/openmindednewby/music-runtime.git"
+    "url": "git+https://github.com/openmindednewby/music-runtime.git"
   },
   "homepage": "https://github.com/openmindednewby/music-runtime#readme",
   "bugs": {
@@ -67,8 +67,9 @@
     "deps:unused": "npx depcheck --ignores \"@types/jest,@types/node,rimraf\"",
     "deps:licenses": "npx license-checker --onlyAllow \"MIT;Apache-2.0;ISC;BSD-2-Clause;BSD-3-Clause;0BSD;Unlicense;CC0-1.0\"",
     "deps:health": "npm run deps:outdated && npm run deps:unused",
-    "prepublishOnly": "npm run clean && npm run build && npm run test",
-    "version": "npm run build"
+    "prepublishOnly": "npm run clean && npm run build && npm run test && npm run test:consumer",
+    "version": "npm run build",
+    "test:consumer": "node scripts/check-isolated-consumer.cjs"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",

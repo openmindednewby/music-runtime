@@ -27,7 +27,8 @@ export { AudioMixer } from './AudioMixer';
 export type { AudioMixerOptions, MuteableEngine } from './AudioMixer';
 export { CooldownGate } from './CooldownGate';
 export { SfxPlayer } from './SfxPlayer';
-export type { SfxVoice, SfxBank, SfxPlayerOptions, SfxPlayOptions } from './SfxPlayer';
+export { MAX_SFX_DURATION } from './SfxPlayer';
+export type { SfxVoice, SfxToneVoice, SfxNoiseVoice, SfxBank, SfxPlayerOptions, SfxPlayOptions } from './SfxPlayer';
 export { SFX_PRESETS } from './sfxPresets';
 export type { SfxPresetId } from './sfxPresets';
 export type {

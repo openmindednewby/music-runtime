@@ -66,6 +66,8 @@ mixer.toggleMute();
 
 `localVolumeStorage` stores `{ music, sfx, muted }` as JSON under `epmr_volume_v1`; with nothing there it imports the 1.0 `epmr_music_mute` flag. To store prefs elsewhere, pass any `{ load(): VolumePrefs | null; save(p): boolean }`.
 
+Calling `engine.setMute()` directly keeps its 1.0 behaviour: it writes only the legacy `epmr_music_mute` key and bypasses `VolumeStorage` and the mixer. Once an engine is attached, mute through `mixer.setMuted()` / `mixer.toggleMute()` so the prefs, the master gain and the engine stay in step.
+
 ## The `.eptrack/1` format
 
 Every `EpTrack` is fully self-describing — all the synth's per-track parameters live on the object, so a track is portable across games:

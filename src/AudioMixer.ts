@@ -95,7 +95,11 @@ export class AudioMixer {
   private _commit(): boolean {
     this.apply();
     for (const listener of this._listeners) {
-      listener(this._prefs);
+      try {
+        listener(this._prefs);
+      } catch {
+        // A faulty subscriber must not block the other listeners or the save.
+      }
     }
     try {
       return this._storage.save(this._prefs);
