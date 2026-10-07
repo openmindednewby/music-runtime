@@ -17,6 +17,8 @@ interface SfxVoiceBase {
   /** 0..1, before the channel gain. */
   readonly gain: number;
   readonly filter?: { readonly type: BiquadFilterType; readonly freq: number };
+  /** Start offset in seconds from play(); clamped to 0..MAX_SFX_DURATION. */
+  readonly delay?: number;
 }
 
 export interface SfxToneVoice extends SfxVoiceBase {
@@ -55,6 +57,13 @@ function defaultNow(): number {
 
 function isVoiceList(entry: SfxVoice | readonly SfxVoice[]): entry is readonly SfxVoice[] {
   return Array.isArray(entry);
+}
+
+function startOffset(delay: number | undefined): number {
+  if (delay === undefined || !Number.isFinite(delay)) {
+    return 0;
+  }
+  return Math.min(MAX_SFX_DURATION, Math.max(0, delay));
 }
 
 function makeNoiseBuffer(ctx: AudioContext, length: number): AudioBuffer {
@@ -126,7 +135,7 @@ export class SfxPlayer<Id extends string> {
   }
 
   private _playVoice(ctx: AudioContext, dest: AudioNode, v: SfxVoice, opts: SfxPlayOptions): void {
-    const t = ctx.currentTime;
+    const t = ctx.currentTime + startOffset(v.delay);
     const dur = Math.min(v.dur, MAX_SFX_DURATION);
     const peak = Math.min(1, v.gain * (opts.gain ?? 1));
     const attack = Math.min(v.attack ?? DEFAULT_ATTACK, dur);

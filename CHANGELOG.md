@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0 — 2026-10-08
+
+Additive; with neither option set, behaviour is identical to 1.1.1 (pinned by `SfxPlayer.delay.test.ts` and `volume.levels.test.ts`).
+
+- `SfxVoice.delay?` (seconds, clamped to 0..`MAX_SFX_DURATION`, non-finite -> 0): a voice in a layered entry starts that long after `play()`, so arpeggios and bell partials can stagger.
+- `AudioMixerOptions.levels?: VolumeLevels`: gain per step replacing the 0..5 squared curve; step count = list length (e.g. `[0, 0.25, 0.5, 0.9]` = steps 0..3). Stored and set steps clamp to the list; `mixer.maxStep()` returns the highest step.
+- New helpers `maxStep(levels?)`, `clampStepTo(step, max)`, `levelToGain(step, levels)`. `clampStep` and `stepToGain` keep their 1.1.1 signatures (safe as `.map` callbacks).
+
 ## 1.1.1 — 2026-09-30
 
 - `AudioChannel` is now a regular `enum`. 1.1.0 published a `declare const enum`, which consumers compiled with `isolatedModules` cannot use. `npm run test:consumer` (also run by `prepublishOnly`) type-checks a consumer against the built `dist` with `isolatedModules: true`.

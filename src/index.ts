@@ -19,10 +19,13 @@ export {
   DEFAULT_VOLUME_KEY,
   clampStep,
   stepToGain,
+  maxStep,
+  clampStepTo,
+  levelToGain,
   defaultVolumePrefs,
   localVolumeStorage,
 } from './volume';
-export type { VolumePrefs, VolumeStorage, VolumeKeyValueStore } from './volume';
+export type { VolumePrefs, VolumeStorage, VolumeKeyValueStore, VolumeLevels } from './volume';
 export { AudioMixer } from './AudioMixer';
 export type { AudioMixerOptions, MuteableEngine } from './AudioMixer';
 export { CooldownGate } from './CooldownGate';

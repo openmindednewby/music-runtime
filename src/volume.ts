@@ -20,18 +20,44 @@ export interface VolumeStorage {
   save(prefs: VolumePrefs): boolean;
 }
 
+/** Gain (0..1) per volume step; the step count is the list length. */
+export type VolumeLevels = readonly number[];
+
 export type VolumeKeyValueStore = Pick<Storage, 'getItem' | 'setItem'>;
 
+function hasLevels(levels: VolumeLevels | undefined): levels is VolumeLevels {
+  return levels !== undefined && levels.length > 0;
+}
+
+/** Highest step: `levels.length - 1` when custom levels are given, else VOLUME_STEPS. */
+export function maxStep(levels?: VolumeLevels): number {
+  return hasLevels(levels) ? levels.length - 1 : VOLUME_STEPS;
+}
+
 export function clampStep(step: number): number {
+  return clampStepTo(step, VOLUME_STEPS);
+}
+
+/** clampStep with an explicit highest step; NaN maps to min(DEFAULT_VOLUME_STEP, max). */
+export function clampStepTo(step: number, max: number): number {
   if (Number.isNaN(step)) {
-    return DEFAULT_VOLUME_STEP;
+    return Math.min(DEFAULT_VOLUME_STEP, max);
   }
-  return Math.min(VOLUME_STEPS, Math.max(0, Math.round(step)));
+  return Math.min(max, Math.max(0, Math.round(step)));
 }
 
 /** Perceptual (squared) curve: 0 -> 0, VOLUME_STEPS -> 1, strictly increasing. */
 export function stepToGain(step: number): number {
   return Math.pow(clampStep(step) / VOLUME_STEPS, GAIN_CURVE_EXPONENT);
+}
+
+/** Gain for a step on a custom level list (clamped to 0..1); an empty list uses stepToGain. */
+export function levelToGain(step: number, levels: VolumeLevels | undefined): number {
+  if (!hasLevels(levels)) {
+    return stepToGain(step);
+  }
+  const level = levels[clampStepTo(step, levels.length - 1)] ?? 0;
+  return Math.min(1, Math.max(0, level));
 }
 
 export function defaultVolumePrefs(): VolumePrefs {

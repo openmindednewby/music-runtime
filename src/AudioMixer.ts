@@ -4,12 +4,14 @@
 
 import type { SfxBus } from './SfxBus';
 import { AudioChannel } from './AudioChannel';
-import { clampStep, defaultVolumePrefs, localVolumeStorage, stepToGain } from './volume';
-import type { VolumePrefs, VolumeStorage } from './volume';
+import { clampStepTo, defaultVolumePrefs, levelToGain, localVolumeStorage, maxStep } from './volume';
+import type { VolumeLevels, VolumePrefs, VolumeStorage } from './volume';
 
 export interface AudioMixerOptions {
   readonly storage?: VolumeStorage;
   readonly defaults?: Partial<VolumePrefs>;
+  /** Gain per step replacing the default 0..5 squared curve; step count = length. */
+  readonly levels?: VolumeLevels;
 }
 
 /** The part of MusicEngine the mixer drives; MusicEngine satisfies it. */
@@ -32,14 +34,22 @@ export class AudioMixer {
   private _prefs: VolumePrefs;
   private _engine: MuteableEngine | null = null;
   private readonly _listeners = new Set<Listener>();
+  private readonly _levels: VolumeLevels | undefined;
+  private readonly _maxStep: number;
 
   constructor(
     private readonly _bus: SfxBus,
     options: AudioMixerOptions = {},
   ) {
     this._storage = options.storage ?? localVolumeStorage();
+    this._levels = options.levels;
+    this._maxStep = maxStep(options.levels);
     const merged = safeLoad(this._storage) ?? { ...defaultVolumePrefs(), ...options.defaults };
-    this._prefs = { music: clampStep(merged.music), sfx: clampStep(merged.sfx), muted: merged.muted === true };
+    this._prefs = {
+      music: clampStepTo(merged.music, this._maxStep),
+      sfx: clampStepTo(merged.sfx, this._maxStep),
+      muted: merged.muted === true,
+    };
     this.apply();
   }
 
@@ -53,8 +63,13 @@ export class AudioMixer {
     return this._prefs;
   }
 
+  /** Highest valid step for this mixer's level scale. */
+  maxStep(): number {
+    return this._maxStep;
+  }
+
   setStep(channel: AudioChannel, step: number): boolean {
-    const clamped = clampStep(step);
+    const clamped = clampStepTo(step, this._maxStep);
     this._prefs =
       channel === AudioChannel.Music ? { ...this._prefs, music: clamped } : { ...this._prefs, sfx: clamped };
     return this._commit();
@@ -85,10 +100,10 @@ export class AudioMixer {
       master.gain.value = this._prefs.muted ? 0 : 1;
     }
     if (musicGain) {
-      musicGain.gain.value = stepToGain(this._prefs.music);
+      musicGain.gain.value = levelToGain(this._prefs.music, this._levels);
     }
     if (sfxGain) {
-      sfxGain.gain.value = stepToGain(this._prefs.sfx);
+      sfxGain.gain.value = levelToGain(this._prefs.sfx, this._levels);
     }
   }
 
