@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0 — 2026-10-18
+
+GAME-FEEL-1 "Make games feel well made", phase 2 (GF-28 audio latency, GF-29 repeated SFX). Additive; with no new option set, a sound plays exactly as in 1.2.0.
+
+- `SfxPlayerOptions.pitchJitter?` (fraction, e.g. `0.04` = +/-4%, clamped to 0..`MAX_PITCH_JITTER`): each play scales the voice pitch by a random factor, multiplied onto `play(id, { pitch })`. `random?` injects the source (default `Math.random`).
+- Bank entries may be `{ variants: [...] }` (each a voice or a layered voice list): each play picks one, never the same one twice in a row. Helpers `jitterPitch` and `pickVariant` are exported.
+- `SfxBus` creates its `AudioContext` with `latencyHint: 'interactive'`; `new SfxBus({ onLatency })` reports `{ baseMs, outputMs }` once per created context (null where the browser has no field); `bus.latency()` reads it any time. A throwing `onLatency` does not break `init()`.
+
 ## 1.2.0 — 2026-10-08
 
 Additive; with neither option set, behaviour is identical to 1.1.1 (pinned by `SfxPlayer.delay.test.ts` and `volume.levels.test.ts`).

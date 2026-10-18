@@ -49,7 +49,7 @@ The package stays dependency-free: volume prefs persist through a `VolumeStorage
 ```ts
 import { MusicEngine, SfxBus, AudioMixer, AudioChannel, SfxPlayer, SFX_PRESETS, localVolumeStorage } from '@dloizides/music-runtime';
 
-const bus = new SfxBus();
+const bus = new SfxBus({ onLatency: (l) => console.info('audio latency ms', l) });
 const mixer = new AudioMixer(bus, { storage: localVolumeStorage() }); // defaults: music 3, sfx 3 of 5, unmuted
 const engine = new MusicEngine(bus);
 mixer.attach(engine);                       // mute now also stops music scheduling
@@ -58,7 +58,7 @@ mixer.attach(engine);                       // mute now also stops music schedul
 bus.init();
 mixer.apply();                              // the graph is lazy; re-apply gains once it exists
 
-const sfx = new SfxPlayer(bus, mixer, { bank: SFX_PRESETS, cooldownMs: { pickup: 60 } });
+const sfx = new SfxPlayer(bus, mixer, { bank: SFX_PRESETS, cooldownMs: { pickup: 60 }, pitchJitter: 0.04 });
 sfx.play('jump');                           // false when muted, sfx step 0, cooling down, or no AudioContext
 mixer.setStep(AudioChannel.Music, 4);       // false = not persisted; the change still applies this session
 mixer.toggleMute();

@@ -14,6 +14,21 @@ import {
 } from './tuning';
 
 const DEFAULT_REVERB_WET = 0.4;
+const MS_PER_SECOND = 1000;
+
+export interface AudioLatency {
+  readonly baseMs: number | null;
+  readonly outputMs: number | null;
+}
+
+export interface SfxBusOptions {
+  /** Called once per created AudioContext with its base and output latency. */
+  readonly onLatency?: (latency: AudioLatency) => void;
+}
+
+function toMs(seconds: number | undefined): number | null {
+  return typeof seconds === 'number' && Number.isFinite(seconds) ? seconds * MS_PER_SECOND : null;
+}
 
 export class SfxBus {
   /** Lazily-initialized — null until init() runs. */
@@ -31,6 +46,17 @@ export class SfxBus {
   private _reverbFb: GainNode | null = null;
   private _reverbFilter: BiquadFilterNode | null = null;
   private _reverbWet: GainNode | null = null;
+
+  constructor(private readonly _options: SfxBusOptions = {}) {}
+
+  /** Base and output latency of the live context in ms, or null before init(). */
+  latency(): AudioLatency | null {
+    const ctx = this.ctx as (AudioContext & { outputLatency?: number }) | null;
+    if (!ctx) {
+      return null;
+    }
+    return { baseMs: toMs(ctx.baseLatency), outputMs: toMs(ctx.outputLatency) };
+  }
 
   /** Where music sources connect by default. */
   get musicDest(): AudioNode | null {
@@ -57,7 +83,8 @@ export class SfxBus {
       if (!Ctor) {
         return;
       }
-      this.ctx = new Ctor();
+      this.ctx = new Ctor({ latencyHint: 'interactive' });
+      this._reportLatency();
     }
     if (!this.ctx) {
       return;
@@ -111,6 +138,18 @@ export class SfxBus {
     this.musicGain = null;
     this.sfxGain = null;
     this.master = null;
+  }
+
+  private _reportLatency(): void {
+    const latency = this.latency();
+    if (!latency || !this._options.onLatency) {
+      return;
+    }
+    try {
+      this._options.onLatency(latency);
+    } catch {
+      return;
+    }
   }
 
   private _mkReverb(): void {

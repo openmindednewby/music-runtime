@@ -6,6 +6,7 @@
 import type { SfxBus } from './SfxBus';
 import type { AudioMixer } from './AudioMixer';
 import { CooldownGate } from './CooldownGate';
+import { jitterPitch, pickVariant } from './sfxVariation';
 import type { EpWaveType } from './types';
 
 export const MAX_SFX_DURATION = 1.5;
@@ -33,12 +34,22 @@ export interface SfxNoiseVoice extends SfxVoiceBase {
 
 export type SfxVoice = SfxToneVoice | SfxNoiseVoice;
 
-export type SfxBank<Id extends string> = Readonly<Record<Id, SfxVoice | readonly SfxVoice[]>>;
+export type SfxLayer = SfxVoice | readonly SfxVoice[];
+
+/** A sound with alternatives; each play picks one, never the same one twice in a row. */
+export interface SfxVariants {
+  readonly variants: readonly SfxLayer[];
+}
+
+export type SfxBank<Id extends string> = Readonly<Record<Id, SfxLayer | SfxVariants>>;
 
 export interface SfxPlayerOptions<Id extends string> {
   readonly bank: SfxBank<Id>;
   readonly cooldownMs?: Partial<Record<Id, number>>;
   readonly now?: () => number;
+  /** Fraction of random pitch spread per play (0.04 = +/-4%); 0 or unset plays the exact pitch. */
+  readonly pitchJitter?: number;
+  readonly random?: () => number;
 }
 
 export interface SfxPlayOptions {
@@ -55,8 +66,12 @@ function defaultNow(): number {
   return typeof performance !== 'undefined' ? performance.now() : Date.now();
 }
 
-function isVoiceList(entry: SfxVoice | readonly SfxVoice[]): entry is readonly SfxVoice[] {
+function isVoiceList(entry: SfxLayer): entry is readonly SfxVoice[] {
   return Array.isArray(entry);
+}
+
+function isVariants(entry: SfxLayer | SfxVariants): entry is SfxVariants {
+  return !Array.isArray(entry) && 'variants' in entry;
 }
 
 function startOffset(delay: number | undefined): number {
@@ -90,6 +105,8 @@ export class SfxPlayer<Id extends string> {
   private readonly _now: () => number;
   private _noiseCtx: AudioContext | null = null;
   private readonly _noiseBuffers = new Map<number, AudioBuffer>();
+  private readonly _random: () => number;
+  private readonly _lastVariant = new Map<Id, number>();
 
   constructor(
     private readonly _bus: SfxBus,
@@ -98,6 +115,7 @@ export class SfxPlayer<Id extends string> {
   ) {
     this._gate = new CooldownGate<Id>(_options.cooldownMs ?? {});
     this._now = _options.now ?? defaultNow;
+    this._random = _options.random ?? Math.random;
   }
 
   play(id: Id, opts: SfxPlayOptions = {}): boolean {
@@ -111,11 +129,22 @@ export class SfxPlayer<Id extends string> {
     if (!this._gate.tryPass(id, this._now())) {
       return false;
     }
-    const voices: readonly SfxVoice[] = isVoiceList(entry) ? entry : [entry];
+    const layer = this._layer(id, entry);
+    const voices: readonly SfxVoice[] = isVoiceList(layer) ? layer : [layer];
+    const pitch = jitterPitch(opts.pitch ?? 1, this._options.pitchJitter ?? 0, this._random);
     for (const v of voices) {
-      this._playVoice(ctx, dest, v, opts);
+      this._playVoice(ctx, dest, v, { ...opts, pitch });
     }
     return true;
+  }
+
+  private _layer(id: Id, entry: SfxLayer | SfxVariants): SfxLayer {
+    if (!isVariants(entry)) {
+      return entry;
+    }
+    const index = pickVariant(entry.variants.length, this._lastVariant.get(id) ?? -1, this._random);
+    this._lastVariant.set(id, index);
+    return entry.variants[index] ?? [];
   }
 
   private _noise(ctx: AudioContext, dur: number): AudioBufferSourceNode {

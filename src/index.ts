@@ -7,6 +7,7 @@
 export { MusicEngine } from './MusicEngine';
 export type { DropState } from './MusicEngine';
 export { SfxBus } from './SfxBus';
+export type { SfxBusOptions, AudioLatency } from './SfxBus';
 export { Scheduler } from './Scheduler';
 export type { SchedulerTickInfo } from './Scheduler';
 export { parseBeatFlag, parseBeatLane } from './PatternParser';
@@ -31,7 +32,8 @@ export type { AudioMixerOptions, MuteableEngine } from './AudioMixer';
 export { CooldownGate } from './CooldownGate';
 export { SfxPlayer } from './SfxPlayer';
 export { MAX_SFX_DURATION } from './SfxPlayer';
-export type { SfxVoice, SfxToneVoice, SfxNoiseVoice, SfxBank, SfxPlayerOptions, SfxPlayOptions } from './SfxPlayer';
+export type { SfxVoice, SfxToneVoice, SfxNoiseVoice, SfxBank, SfxLayer, SfxVariants, SfxPlayerOptions, SfxPlayOptions } from './SfxPlayer';
+export { jitterPitch, pickVariant, MAX_PITCH_JITTER } from './sfxVariation';
 export { SFX_PRESETS } from './sfxPresets';
 export type { SfxPresetId } from './sfxPresets';
 export type {
