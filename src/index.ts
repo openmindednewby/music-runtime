@@ -32,10 +32,15 @@ export type { AudioMixerOptions, MuteableEngine } from './AudioMixer';
 export { CooldownGate } from './CooldownGate';
 export { SfxPlayer } from './SfxPlayer';
 export { MAX_SFX_DURATION } from './SfxPlayer';
-export type { SfxVoice, SfxToneVoice, SfxNoiseVoice, SfxBank, SfxLayer, SfxVariants, SfxPlayerOptions, SfxPlayOptions } from './SfxPlayer';
+export type { SfxVoice, SfxToneVoice, SfxNoiseVoice, SfxFormantVoice, SfxBank, SfxLayer, SfxVariants, SfxPlayerOptions, SfxPlayOptions } from './SfxPlayer';
 export { jitterPitch, pickVariant, MAX_PITCH_JITTER } from './sfxVariation';
 export { SFX_PRESETS } from './sfxPresets';
 export type { SfxPresetId } from './sfxPresets';
+export { VOWELS, renderFormant, shapeEnvelope } from './formantVoice';
+export type { FormantBand, Vowel, VowelFrame, PitchPoint, Vibrato, FormantShape, FormantRender, FormantGraph } from './formantVoice';
+export { DeathCause } from './DeathCause';
+export { DEATH_CAUSE_SFX, deathCauseSfxId, withPitch } from './deathSounds';
+export type { DeathCauseSfxId } from './deathSounds';
 export type {
   EpTrack,
   EpScale,

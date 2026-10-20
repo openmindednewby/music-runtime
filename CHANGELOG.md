@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0 — 2026-10-21
+
+GAME-SFX-1 "Shared meme death sounds". Additive; existing ids, including `death`, play exactly as in 1.3.0.
+
+- New voice kind `SfxFormantVoice` (`wave: 'formant'`): a sawtooth or square source through three formant bands, driven by data: `pitch` points, a `vowels` sequence (F1/F2/F3 per frame, glided), optional `vibrato`, optional `hardStop` (holds the peak, then cuts to 0). `VOWELS` holds aa, ah, oh, oo, uh, ee, mm. Noise consonants are ordinary `noise` voices in the same layer.
+- `DeathCause` (Crash, Fall, Burn, Zap, Slip, Buried) and `DEATH_CAUSE_SFX`, a bank keyed `death.<cause>` via `deathCauseSfxId(cause)`: Crash = FAAHHH, Fall = dropping "aaaa", Burn = "ow-ow-ow", Zap = "bzzt-uh", Slip = "whoa-oops", Buried = muffled "mmph". Each is at most 1 s with two pitch variants. Merge with `SFX_PRESETS` into one `SfxPlayer` bank.
+- `withPitch(layer, factor)` scales every tone and formant pitch in a layer.
+
 ## 1.3.0 — 2026-10-18
 
 GAME-FEEL-1 "Make games feel well made", phase 2 (GF-28 audio latency, GF-29 repeated SFX). Additive; with no new option set, a sound plays exactly as in 1.2.0.

@@ -8,6 +8,8 @@ import type { AudioMixer } from './AudioMixer';
 import { CooldownGate } from './CooldownGate';
 import { jitterPitch, pickVariant } from './sfxVariation';
 import type { EpWaveType } from './types';
+import { renderFormant, shapeEnvelope } from './formantVoice';
+import type { FormantShape } from './formantVoice';
 
 export const MAX_SFX_DURATION = 1.5;
 
@@ -32,7 +34,11 @@ export interface SfxNoiseVoice extends SfxVoiceBase {
   readonly wave: 'noise';
 }
 
-export type SfxVoice = SfxToneVoice | SfxNoiseVoice;
+export interface SfxFormantVoice extends SfxVoiceBase, FormantShape {
+  readonly wave: 'formant';
+}
+
+export type SfxVoice = SfxToneVoice | SfxNoiseVoice | SfxFormantVoice;
 
 export type SfxLayer = SfxVoice | readonly SfxVoice[];
 
@@ -163,7 +169,42 @@ export class SfxPlayer<Id extends string> {
     return src;
   }
 
+  private _playFormant(ctx: AudioContext, dest: AudioNode, v: SfxFormantVoice, opts: SfxPlayOptions): void {
+    const t = ctx.currentTime + startOffset(v.delay);
+    const dur = Math.min(v.dur, MAX_SFX_DURATION);
+    const peak = Math.min(1, v.gain * (opts.gain ?? 1));
+    const env = ctx.createGain();
+    shapeEnvelope(env.gain, peak, Math.min(v.attack ?? DEFAULT_ATTACK, dur), t, dur, v.hardStop);
+    const graph = renderFormant(v, { ctx, out: env, t, dur, pitch: opts.pitch ?? 1 });
+    const nodes: AudioNode[] = [...graph.nodes, env];
+    let tail: AudioNode = env;
+    if (v.filter) {
+      const filter = ctx.createBiquadFilter();
+      filter.type = v.filter.type;
+      filter.frequency.setValueAtTime(v.filter.freq, t);
+      tail = env.connect(filter);
+      nodes.push(filter);
+    }
+    tail.connect(dest);
+    const [lead] = graph.oscs;
+    if (lead) {
+      lead.onended = (): void => {
+        for (const n of nodes) {
+          n.disconnect();
+        }
+      };
+    }
+    for (const osc of graph.oscs) {
+      osc.start(t);
+      osc.stop(t + dur + STOP_PAD);
+    }
+  }
+
   private _playVoice(ctx: AudioContext, dest: AudioNode, v: SfxVoice, opts: SfxPlayOptions): void {
+    if (v.wave === 'formant') {
+      this._playFormant(ctx, dest, v, opts);
+      return;
+    }
     const t = ctx.currentTime + startOffset(v.delay);
     const dur = Math.min(v.dur, MAX_SFX_DURATION);
     const peak = Math.min(1, v.gain * (opts.gain ?? 1));

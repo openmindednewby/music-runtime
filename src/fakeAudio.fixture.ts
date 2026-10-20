@@ -52,7 +52,7 @@ export function fakeCtx(): FakeCtx {
     createOscillator: jest.fn(() => source({ type: 'sine', frequency: param(440) })),
     createBufferSource: jest.fn(() => source({ buffer: null as unknown })),
     createBuffer: jest.fn((_c: number, len: number) => ({ length: len, getChannelData: (): Float32Array => new Float32Array(len) })),
-    createBiquadFilter: jest.fn(() => node({ type: 'lowpass', frequency: param(1000) })),
+    createBiquadFilter: jest.fn(() => node({ type: 'lowpass', frequency: param(1000), Q: param(1) })),
   };
 }
 
