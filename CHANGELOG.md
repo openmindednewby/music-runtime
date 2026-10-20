@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0 — 2026-10-21
+
+GAME-SFX-1 "Shared meme death sounds", D-SFX1-VARY "More variety, so a death sound doesn't repeat". Additive; every 1.4.0 export and id still works.
+
+- Each `DeathCause` now has 3 or 4 distinct voice lines (different vowel sequence and pitch contour each, not pitch copies); Crash keeps the FAAHHH as line 1. `DEATH_CAUSE_SFX['death.<cause>']` holds them as variants, so `SfxPlayer.play` never plays the same line twice in a row. The two pitch-shifted copies of 1.4.0 are gone; use `pitchJitter` for pitch spread.
+- `DEATH_LINES` (lines per cause), `DEATH_LINE_SFX` (each line under `death.<cause>.<n>`), `deathLineSfxIds(cause)`.
+- `createDeathSfxPicker(random?)` returns `(cause) => 'death.<cause>.<n>'`, never the previous line for that cause; `pickDeathSfx(cause, random?)` does the same from one shared history.
+
 ## 1.4.0 — 2026-10-21
 
 GAME-SFX-1 "Shared meme death sounds". Additive; existing ids, including `death`, play exactly as in 1.3.0.

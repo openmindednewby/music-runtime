@@ -1,15 +1,21 @@
 import { DeathCause } from './DeathCause';
-import { VOWELS } from './formantVoice';
-import type { SfxBank, SfxFormantVoice, SfxLayer, SfxVariants, SfxVoice } from './SfxPlayer';
+import { DEATH_LINES } from './deathLines';
+import { pickVariant } from './sfxVariation';
+import type { SfxBank, SfxLayer, SfxVoice } from './SfxPlayer';
 
 export type DeathCauseSfxId = `death.${DeathCause}`;
+export type DeathLineSfxId = `death.${DeathCause}.${number}`;
+export type DeathSfxPicker = (cause: DeathCause) => DeathLineSfxId;
 
 /** The bank id of the meme death sound for a cause. */
 export function deathCauseSfxId(cause: DeathCause): DeathCauseSfxId {
   return `death.${cause}`;
 }
 
-const VARIANT_PITCHES = [1, 1.12] as const;
+/** The bank ids of every voice line of a cause, `death.<cause>.1` upwards. */
+export function deathLineSfxIds(cause: DeathCause): readonly DeathLineSfxId[] {
+  return DEATH_LINES[cause].map((_line, i) => `death.${cause}.${i + 1}` as const);
+}
 
 function pitchVoice(v: SfxVoice, factor: number): SfxVoice {
   if (v.wave === 'noise') {
@@ -30,115 +36,34 @@ export function withPitch(layer: SfxLayer, factor: number): SfxLayer {
   return isVoiceList(layer) ? layer.map((v) => pitchVoice(v, factor)) : pitchVoice(layer, factor);
 }
 
-const twoPitches = (layer: SfxLayer): SfxVariants => ({ variants: VARIANT_PITCHES.map((f) => withPitch(layer, f)) });
+const CAUSES = Object.values(DeathCause);
 
-const ow = (delay: number, startHz: number): SfxFormantVoice => ({
-  wave: 'formant',
-  delay,
-  dur: 0.26,
-  attack: 0.02,
-  gain: 0.45,
-  hardStop: 0.02,
-  pitch: [{ at: 0, hz: startHz }, { at: 0.4, hz: startHz * 1.2 }, { at: 1, hz: startHz * 0.8 }],
-  vowels: [{ at: 0, vowel: VOWELS.ah }, { at: 1, vowel: VOWELS.oo }],
-});
+/** One entry per death cause whose variants are its distinct voice lines; merges with SFX_PRESETS without touching 'death'. */
+export const DEATH_CAUSE_SFX: SfxBank<DeathCauseSfxId> = Object.fromEntries(
+  CAUSES.map((cause) => [deathCauseSfxId(cause), { variants: DEATH_LINES[cause] }]),
+) as SfxBank<DeathCauseSfxId>;
 
-const CRASH: SfxLayer = [
-  { wave: 'noise', attack: 0.015, dur: 0.09, gain: 0.35, filter: { type: 'bandpass', freq: 4200 } },
-  {
-    wave: 'formant',
-    delay: 0.09,
-    dur: 0.9,
-    attack: 0.04,
-    gain: 0.5,
-    hardStop: 0.012,
-    pitch: [{ at: 0, hz: 220 }, { at: 0.3, hz: 330 }, { at: 1, hz: 180 }],
-    vowels: [{ at: 0, vowel: VOWELS.aa }],
-    vibrato: { hz: 5.5, depthHz: 7 },
-  },
-];
+/** Every voice line under its own `death.<cause>.<n>` id, for playing the line a picker chose. */
+export const DEATH_LINE_SFX: SfxBank<DeathLineSfxId> = Object.fromEntries(
+  CAUSES.flatMap((cause) => deathLineSfxIds(cause).map((id, i) => [id, DEATH_LINES[cause][i] ?? []])),
+) as SfxBank<DeathLineSfxId>;
 
-const FALL: SfxLayer = {
-  wave: 'formant',
-  dur: 1,
-  attack: 0.03,
-  gain: 0.5,
-  pitch: [{ at: 0, hz: 420 }, { at: 0.15, hz: 440 }, { at: 1, hz: 110 }],
-  vowels: [{ at: 0, vowel: VOWELS.ah }, { at: 1, vowel: VOWELS.aa }],
-  vibrato: { hz: 6, depthHz: 10 },
-  filter: { type: 'lowpass', freq: 3000 },
-};
+function pickWith(last: Map<DeathCause, number>, cause: DeathCause, random: () => number): DeathLineSfxId {
+  const ids = deathLineSfxIds(cause);
+  const index = pickVariant(ids.length, last.get(cause) ?? -1, random);
+  last.set(cause, index);
+  return ids[index] ?? `death.${cause}.1`;
+}
 
-const BURN: SfxLayer = [ow(0, 300), ow(0.28, 330), ow(0.56, 360)];
+/** Returns a picker that chooses a random line id per cause, never the previous one for that cause. */
+export function createDeathSfxPicker(random: () => number = Math.random): DeathSfxPicker {
+  const last = new Map<DeathCause, number>();
+  return (cause) => pickWith(last, cause, random);
+}
 
-const ZAP: SfxLayer = [
-  {
-    wave: 'formant',
-    source: 'square',
-    dur: 0.3,
-    attack: 0.005,
-    gain: 0.35,
-    hardStop: 0.01,
-    pitch: [{ at: 0, hz: 110 }, { at: 1, hz: 100 }],
-    vowels: [{ at: 0, vowel: VOWELS.ee }],
-    vibrato: { hz: 30, depthHz: 12 },
-  },
-  { wave: 'noise', attack: 0.005, dur: 0.3, gain: 0.15, filter: { type: 'highpass', freq: 3000 } },
-  {
-    wave: 'formant',
-    delay: 0.4,
-    dur: 0.3,
-    attack: 0.02,
-    gain: 0.45,
-    hardStop: 0.015,
-    pitch: [{ at: 0, hz: 200 }, { at: 1, hz: 150 }],
-    vowels: [{ at: 0, vowel: VOWELS.uh }],
-  },
-];
+const sharedLast = new Map<DeathCause, number>();
 
-const SLIP: SfxLayer = [
-  {
-    wave: 'formant',
-    dur: 0.45,
-    attack: 0.03,
-    gain: 0.45,
-    pitch: [{ at: 0, hz: 260 }, { at: 0.5, hz: 380 }, { at: 1, hz: 300 }],
-    vowels: [{ at: 0, vowel: VOWELS.oo }, { at: 0.35, vowel: VOWELS.oh }, { at: 1, vowel: VOWELS.ah }],
-    vibrato: { hz: 6, depthHz: 6 },
-  },
-  {
-    wave: 'formant',
-    delay: 0.55,
-    dur: 0.2,
-    attack: 0.015,
-    gain: 0.45,
-    hardStop: 0.008,
-    pitch: [{ at: 0, hz: 340 }, { at: 1, hz: 280 }],
-    vowels: [{ at: 0, vowel: VOWELS.oo }, { at: 1, vowel: VOWELS.oo }],
-  },
-  { wave: 'noise', delay: 0.78, attack: 0.01, dur: 0.15, gain: 0.2, filter: { type: 'highpass', freq: 5000 } },
-];
-
-const BURIED: SfxLayer = [
-  {
-    wave: 'formant',
-    dur: 0.5,
-    attack: 0.03,
-    gain: 0.6,
-    hardStop: 0.01,
-    pitch: [{ at: 0, hz: 180 }, { at: 0.4, hz: 210 }, { at: 1, hz: 150 }],
-    vowels: [{ at: 0, vowel: VOWELS.mm }],
-    filter: { type: 'lowpass', freq: 900 },
-  },
-  { wave: 'noise', delay: 0.52, attack: 0.005, dur: 0.12, gain: 0.25, filter: { type: 'lowpass', freq: 1500 } },
-];
-
-/** One meme voice per death cause, two pitch variants each; merges with SFX_PRESETS without touching 'death'. */
-export const DEATH_CAUSE_SFX: SfxBank<DeathCauseSfxId> = {
-  'death.crash': twoPitches(CRASH),
-  'death.fall': twoPitches(FALL),
-  'death.burn': twoPitches(BURN),
-  'death.zap': twoPitches(ZAP),
-  'death.slip': twoPitches(SLIP),
-  'death.buried': twoPitches(BURIED),
-};
+/** Picks a random line id for a cause from one shared history, never the line it picked last for that cause. */
+export function pickDeathSfx(cause: DeathCause, random: () => number = Math.random): DeathLineSfxId {
+  return pickWith(sharedLast, cause, random);
+}

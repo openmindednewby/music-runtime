@@ -6,11 +6,18 @@ import type { SfxFormantVoice, SfxLayer, SfxToneVoice, SfxVariants, SfxVoice } f
 
 const CAUSES = [DeathCause.Crash, DeathCause.Fall, DeathCause.Burn, DeathCause.Zap, DeathCause.Slip, DeathCause.Buried];
 const MAX_SECONDS = 1;
+const MIN_LINES = 3;
+const MAX_LINES = 4;
 
 const voicesOf = (layer: SfxLayer): readonly SfxVoice[] => (Array.isArray(layer) ? layer : [layer as SfxVoice]);
 const variantsOf = (cause: DeathCause): readonly SfxLayer[] => (DEATH_CAUSE_SFX[deathCauseSfxId(cause)] as SfxVariants).variants;
 const allVoices = (): SfxVoice[] => CAUSES.flatMap((c) => variantsOf(c).flatMap(voicesOf));
 const formants = (): SfxFormantVoice[] => allVoices().filter((v): v is SfxFormantVoice => v.wave === 'formant');
+const vowelName = (v: unknown): string => Object.entries(VOWELS).find(([, value]) => value === v)?.[0] ?? '?';
+const formantsOf = (layer: SfxLayer): SfxFormantVoice[] => voicesOf(layer).filter((v): v is SfxFormantVoice => v.wave === 'formant');
+const vowelSequence = (layer: SfxLayer): string => formantsOf(layer).map((v) => v.vowels.map((f) => vowelName(f.vowel)).join('-')).join('|');
+const contour = (layer: SfxLayer): string =>
+  formantsOf(layer).map((v) => v.pitch.map((p) => `${p.at}:${(p.hz / (v.pitch[0]?.hz ?? 1)).toFixed(2)}`).join(',')).join('|');
 const ascending = (xs: readonly number[]): boolean => xs.every((x, i) => i === 0 || x >= (xs[i - 1] ?? 0));
 
 describe('deathCauseSfxId', () => {
@@ -36,10 +43,10 @@ describe('deathCauseSfxId', () => {
 });
 
 describe('DEATH_CAUSE_SFX', () => {
-  it('with each cause, has exactly two pitch variants', () => {
-    const counts = CAUSES.map((c) => variantsOf(c).length);
+  it('with each cause, has three or four voice lines', () => {
+    const wrong = CAUSES.filter((c) => variantsOf(c).length < MIN_LINES || variantsOf(c).length > MAX_LINES);
 
-    expect(counts).toEqual(CAUSES.map(() => 2));
+    expect(wrong).toEqual([]);
   });
 
   it('with any variant, ends within one second of play', () => {
@@ -77,12 +84,16 @@ describe('DEATH_CAUSE_SFX', () => {
     expect(shape).toEqual(['noise', 4200, 0.09, VOWELS.aa, [220, 330, 180], 0.012]);
   });
 
-  it('with the two variants of a cause, keeps the vowels and raises the pitch', () => {
-    const [low, high] = variantsOf(DeathCause.Slip).map((l) => voicesOf(l).filter((v): v is SfxFormantVoice => v.wave === 'formant'));
+  it('with the lines of a cause, gives each a different vowel sequence', () => {
+    const repeated = CAUSES.filter((c) => new Set(variantsOf(c).map(vowelSequence)).size !== variantsOf(c).length);
 
-    const raised = (high?.[0]?.pitch[0]?.hz ?? 0) > (low?.[0]?.pitch[0]?.hz ?? 0);
+    expect(repeated).toEqual([]);
+  });
 
-    expect([low?.map((v) => v.vowels), raised]).toEqual([high?.map((v) => v.vowels), true]);
+  it('with the lines of a cause, gives each a different pitch contour', () => {
+    const repeated = CAUSES.filter((c) => new Set(variantsOf(c).map(contour)).size !== variantsOf(c).length);
+
+    expect(repeated).toEqual([]);
   });
 });
 

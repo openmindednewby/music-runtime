@@ -39,8 +39,9 @@ export type { SfxPresetId } from './sfxPresets';
 export { VOWELS, renderFormant, shapeEnvelope } from './formantVoice';
 export type { FormantBand, Vowel, VowelFrame, PitchPoint, Vibrato, FormantShape, FormantRender, FormantGraph } from './formantVoice';
 export { DeathCause } from './DeathCause';
-export { DEATH_CAUSE_SFX, deathCauseSfxId, withPitch } from './deathSounds';
-export type { DeathCauseSfxId } from './deathSounds';
+export { DEATH_CAUSE_SFX, DEATH_LINE_SFX, deathCauseSfxId, deathLineSfxIds, withPitch, createDeathSfxPicker, pickDeathSfx } from './deathSounds';
+export type { DeathCauseSfxId, DeathLineSfxId, DeathSfxPicker } from './deathSounds';
+export { DEATH_LINES } from './deathLines';
 export type {
   EpTrack,
   EpScale,
